@@ -45,10 +45,19 @@
    * Navbar links active state on scroll
    */
   let navbarlinks = select('#navbar .scrollto', true)
+  const scrollContainer = select('#main')
   const navbarlinksActive = () => {
-    let position = window.scrollY + 200
+    let position = scrollContainer.scrollTop + 200
     navbarlinks.forEach(navbarlink => {
       if (!navbarlink.hash) return
+      if (navbarlink.hash === '#') {
+        if (scrollContainer.scrollTop < 200) {
+          navbarlink.classList.add('active')
+        } else {
+          navbarlink.classList.remove('active')
+        }
+        return
+      }
       let section = select(navbarlink.hash)
       if (!section) return
       if (position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)) {
@@ -59,18 +68,53 @@
     })
   }
   window.addEventListener('load', navbarlinksActive)
-  onscroll(document, navbarlinksActive)
+  onscroll(scrollContainer, navbarlinksActive)
 
   /**
    * Scrolls to an element with header offset
    */
   const scrollto = (el) => {
     let elementPos = select(el).offsetTop
-    window.scrollTo({
+    scrollContainer.scrollTo({
       top: elementPos,
       behavior: 'smooth'
     })
   }
+
+  /**
+   * Full-section scroll snapping
+   */
+  const sectionPanelScroll = () => {
+    const sections = select('main#main section', true)
+    const scrollContainer = select('#main')
+    let isScrolling = false
+
+    const getActiveSectionIndex = () => {
+      const currentScroll = scrollContainer.scrollTop
+      return sections.findIndex(section => {
+        return currentScroll >= section.offsetTop - 24 && currentScroll < section.offsetTop + section.offsetHeight - 24
+      })
+    }
+
+    on('wheel', '#main', function(e) {
+      if (window.innerWidth < 1200) return
+      if (isScrolling) return
+      const delta = e.deltaY
+      if (Math.abs(delta) < 10) return
+      e.preventDefault()
+      const currentIndex = getActiveSectionIndex()
+      let targetIndex = currentIndex
+      if (delta > 0) targetIndex = Math.min(sections.length - 1, currentIndex + 1)
+      if (delta < 0) targetIndex = Math.max(0, currentIndex - 1)
+      if (targetIndex !== currentIndex && sections[targetIndex]) {
+        isScrolling = true
+        sections[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'start' })
+        window.setTimeout(() => { isScrolling = false }, 700)
+      }
+    })
+  }
+
+  sectionPanelScroll()
 
   /**
    * Back to top button
@@ -78,14 +122,14 @@
   let backtotop = select('.back-to-top')
   if (backtotop) {
     const toggleBacktotop = () => {
-      if (window.scrollY > 100) {
+      if (scrollContainer.scrollTop > 100) {
         backtotop.classList.add('active')
       } else {
         backtotop.classList.remove('active')
       }
     }
     window.addEventListener('load', toggleBacktotop)
-    onscroll(document, toggleBacktotop)
+    onscroll(scrollContainer, toggleBacktotop)
   }
 
   /**
@@ -101,17 +145,34 @@
    * Scrool with ofset on links with a class name .scrollto
    */
   on('click', '.scrollto', function(e) {
-    if (select(this.hash)) {
-      e.preventDefault()
+    let body = select('body')
+    let target = this.hash
 
-      let body = select('body')
+    navbarlinks.forEach(navbarlink => navbarlink.classList.remove('active'))
+    this.classList.add('active')
+
+    if (target === '#') {
+      e.preventDefault()
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
       if (body.classList.contains('mobile-nav-active')) {
         body.classList.remove('mobile-nav-active')
         let navbarToggle = select('.mobile-nav-toggle')
         navbarToggle.classList.toggle('bi-list')
         navbarToggle.classList.toggle('bi-x')
       }
-      scrollto(this.hash)
+      return
+    }
+
+    if (select(target)) {
+      e.preventDefault()
+
+      if (body.classList.contains('mobile-nav-active')) {
+        body.classList.remove('mobile-nav-active')
+        let navbarToggle = select('.mobile-nav-toggle')
+        navbarToggle.classList.toggle('bi-list')
+        navbarToggle.classList.toggle('bi-x')
+      }
+      scrollto(target)
     }
   }, true)
 
@@ -258,5 +319,23 @@
    * Initiate Pure Counter 
    */
   new PureCounter();
+
+  // Animate about-skills bars when they enter the viewport
+  const aboutSkillBars = select('.about-skills .skill-bar', true);
+  if (aboutSkillBars && aboutSkillBars.length) {
+    const obs = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const bar = entry.target;
+          const value = bar.getAttribute('data-value') || bar.getAttribute('aria-valuenow') || '0';
+          bar.style.width = value + '%';
+          const percentEl = bar.querySelector('.skill-percent');
+          if (percentEl) { percentEl.style.opacity = 1; }
+          observer.unobserve(bar);
+        }
+      });
+    }, { threshold: 0.4 });
+    aboutSkillBars.forEach(b => obs.observe(b));
+  }
 
 })()
