@@ -84,37 +84,37 @@
   /**
    * Full-section scroll snapping
    */
-  const sectionPanelScroll = () => {
-    const sections = select('main#main section', true)
-    const scrollContainer = select('#main')
-    let isScrolling = false
+  // const sectionPanelScroll = () => {
+  //   const sections = select('main#main section', true)
+  //   const scrollContainer = select('#main')
+  //   let isScrolling = false
 
-    const getActiveSectionIndex = () => {
-      const currentScroll = scrollContainer.scrollTop
-      return sections.findIndex(section => {
-        return currentScroll >= section.offsetTop - 24 && currentScroll < section.offsetTop + section.offsetHeight - 24
-      })
-    }
+  //   const getActiveSectionIndex = () => {
+  //     const currentScroll = scrollContainer.scrollTop
+  //     return sections.findIndex(section => {
+  //       return currentScroll >= section.offsetTop - 24 && currentScroll < section.offsetTop + section.offsetHeight - 24
+  //     })
+  //   }
 
-    on('wheel', '#main', function(e) {
-      if (window.innerWidth < 1200) return
-      if (isScrolling) return
-      const delta = e.deltaY
-      if (Math.abs(delta) < 10) return
-      e.preventDefault()
-      const currentIndex = getActiveSectionIndex()
-      let targetIndex = currentIndex
-      if (delta > 0) targetIndex = Math.min(sections.length - 1, currentIndex + 1)
-      if (delta < 0) targetIndex = Math.max(0, currentIndex - 1)
-      if (targetIndex !== currentIndex && sections[targetIndex]) {
-        isScrolling = true
-        sections[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'start' })
-        window.setTimeout(() => { isScrolling = false }, 700)
-      }
-    })
-  }
+  //   on('wheel', '#main', function(e) {
+  //     if (window.innerWidth < 1200) return
+  //     if (isScrolling) return
+  //     const delta = e.deltaY
+  //     if (Math.abs(delta) < 10) return
+  //     e.preventDefault()
+  //     const currentIndex = getActiveSectionIndex()
+  //     let targetIndex = currentIndex
+  //     if (delta > 0) targetIndex = Math.min(sections.length - 1, currentIndex + 1)
+  //     if (delta < 0) targetIndex = Math.max(0, currentIndex - 1)
+  //     if (targetIndex !== currentIndex && sections[targetIndex]) {
+  //       isScrolling = true
+  //       sections[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'start' })
+  //       window.setTimeout(() => { isScrolling = false }, 700)
+  //     }
+  //   })
+  // }
 
-  sectionPanelScroll()
+  // sectionPanelScroll()
 
   /**
    * Back to top button
@@ -130,6 +130,10 @@
     }
     window.addEventListener('load', toggleBacktotop)
     onscroll(scrollContainer, toggleBacktotop)
+    on('click', '.back-to-top', function(e) {
+      e.preventDefault()
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
+    })
   }
 
   /**
